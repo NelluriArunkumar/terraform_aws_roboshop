@@ -17,7 +17,7 @@ resource "aws_alb_target_group" "main" {
 
 resource "aws_instance" "main" {
     ami = local.ami_id
-    instance_type = "t3.micro"
+    instance_type = "t2.micro"
     vpc_security_group_ids = [local.sg_id]
     subnet_id = local.private_subnet_id
 
@@ -43,7 +43,7 @@ resource "terraform_data" "main" {
       type = "ssh"
       user = "ec2-user"
       password = "DevOps321"
-      host = aws_instance.catalogue.private_ip
+      host = aws_instance.main.private_ip
     }
 
     provisioner "remote-exec" {
@@ -190,16 +190,16 @@ resource "aws_autoscaling_policy" "main" {
 
 resource "aws_lb_listener_rule" "main" {
     listener_arn = local.alb_listener_arn
-    priority = 10
+    priority = var.rule_priority
 
     action {
       type = "forward"
-      target_group_arn = aws_alb_target_group.catalogue.arn
+      target_group_arn = aws_alb_target_group.main.arn
     }
 
     condition {
       host_header {
-        values = ["catalogue.backend-${var.environment}.${var.zone_name}"]
+        values = [local.rule_header_url]
       }
     }
   
